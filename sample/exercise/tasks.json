@@ -1,0 +1,12 @@
+[
+  {
+    "name": "Problem 1",
+    "evaluator": "line_by_line",
+    "manually": false,
+    "total_points": 4,
+    "params": {
+      "filename": "answer_1.txt",
+      "reference_file": "reference_1.txt"
+    }
+  }
+]
