@@ -2,12 +2,13 @@ import argparse
 import os
 
 
-def run_evaluation(name, input_folder, params=None):
+def run_evaluation(name, input_folder, exercise_folder, params=None):
     """
     Call evaluation function with the given name
 
     :param name: name of the evaluation function to call
     :param input_folder: folder containing the submission to evaluate
+    :param exercise_folder: folder containing the current exercise
     :param params: additional parameters for evaluation function
     :return: points archived, additional comment/error message/...
     """
