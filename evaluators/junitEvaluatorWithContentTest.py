@@ -4,14 +4,18 @@ import re
 
 def checkForString(input_file, checkString):
     checkResult = False
+    if not os.path.exists(input_file):
+        return False
     fileHandle = open(input_file)
     code = fileHandle.read()
     m = re.search('.*'+checkString+'.*', code)
-    #print("'"+resultLine+"'")
     if m:
         #print("Match",m.group(0))
         checkResult = True
+        # if the string is surrounded in a comment then we assume it is not used
         m1 = re.search('//.*'+checkString+'.*', code)
+        # If we have multiple multi-line comments this will match everything
+        # Student are supposed to complain until better solution has been found
         m2 = re.search('/\*([\s\S]*?'+checkString+'[\s\S]*?)\*/', code)
         if m1 or m2:
             #print("Match1",m1.group(0))
@@ -77,16 +81,12 @@ def junitEvaluatorWithContentTest(input_folder, exercise_folder, params=None):
 
     # check if string is in submission
     if 'string_check' in params:
-        print(params['string_check'])
+        print("Checking for given string in file",params['string_check'])
         for f,s in params['string_check'].items():
             input_file = os.path.join(input_folder,f)
             if not checkForString(input_file,s):
-                comment += "Mandatory string '"+s+"'not found in file "+f
+                comment += "Mandatory string '"+s+"' not found in file "+f
                 stop = True
-
-    if stop:
-        return 0, comment.rstrip()
-
 
     # create compilation directory
     compileDir = os.path.join(input_folder, "bin/")
@@ -102,12 +102,17 @@ def junitEvaluatorWithContentTest(input_folder, exercise_folder, params=None):
     # javac -d <compilation directory> -cp <junit-location>:<test-jar-location> <filenames>
     #e.g.: javac -d bin/ -cp ~/Downloads/junit-4.12.jar:SDM_Exercise_02_Solution.jar SQLInteger.java SQLVarchar.java RowPage.java HeapTable.java
 
+    # We stop after compilation since sometimes following assignments depend on the compiled sources
+    if stop:
+        comment += "\nPls. check with instructor if neccessary."
+        return 0, comment.rstrip()
+
     # run Junit test
     for junit_test in params['junit_test_fqns']:
 
         resultFile =  os.path.join(input_folder, 'result_' + junit_test + '.txt')
         open(resultFile, 'a').close()
-        cmd = params['java_path'] + ' -cp ' + compileDir + classpathSeperator + params['hamcrest_jar_path'] + classpathSeperator +  params['junit_jar_path'] + classpathSeperator + testing_jar + ' org.junit.runner.JUnitCore '+ junit_test + ' > ' + resultFile
+        cmd = params['java_path'] + ' -cp ' + compileDir + classpathSeperator + params['hamcrest_jar_path'] + classpathSeperator +  params['junit_jar_path'] + classpathSeperator + testing_jar + ' org.junit.runner.JUnitCore '+ junit_test + ' > ' + resultFile + ' 2> ' + resultFile
         print("Running following command: ", cmd)
         proc = subprocess.Popen(cmd, shell=True).wait()
         # e.g. java -cp bin/:/Users/melhindi/Downloads/junit-4.12.jar:SDM_Exercise_02_Solution.jar:/Users/melhindi/Downloads/hamcrest-core-1.3.jar org.junit.runner.JUnitCore de.tuda.sdm.dmdb.test.TestSuiteDMDB
