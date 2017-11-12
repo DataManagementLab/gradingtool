@@ -1,10 +1,10 @@
 import argparse
-import os,sys
+import imp
 import json
-from pprint import pprint
-import zipfile,fnmatch
-import imp,rarfile,csv
-import re
+import os
+import rarfile
+import zipfile
+
 
 def run_evaluation(name, input_folder, exercise_folder, params=None):
     """
@@ -25,9 +25,6 @@ def run_evaluation(name, input_folder, exercise_folder, params=None):
     p, c = fo.line_by_line(input_folder,exercise_folder,params)
     return p,c
 
-#input, output file name
-output_file_name = 'Results.csv'
-input_file_name = 'Grades-SDM WS 201718-Assignment 01 -- Submission-9529.csv'
 
 # Command line interface
 parser = argparse.ArgumentParser(description='Grade submissions')
@@ -48,107 +45,61 @@ submission_folder = args.submissions[0]
 output_folder = args.output[0]
 
 
-# Initilaize data structure
-results = None
-# TODO Implement ??
-
 # Create output folder if needed
 if not os.path.exists(output_folder):
     os.makedirs(output_folder)
 
-# Create output files if needed
-# TODO Implement ??
 
-# Unzip input files, insert records for every group in result structure
-print("------------------------------------------------")
-print("start of extraction")
-print("------------------------------------------------")
-rootPath = submission_folder
-pattern = '*.zip'
-for root, dirs, files in os.walk(rootPath):
-    for filename in fnmatch.filter(files, pattern):
-        temp_index = root.find('_assignsubmission')
-        temp_str = root[:temp_index]
-        save_path_for_output = os.path.join(output_folder,temp_str[temp_str.rfind("/")+1:])
-        print(save_path_for_output)
-        zipfile.ZipFile(os.path.join(root, filename)).extractall(save_path_for_output)
+# Unzip submissions and store the contentes in output folder
+submission_files = os.listdir(submission_folder)
+for sf in submission_files:
+    input_file = os.path.join(submission_folder, sf)
+    # Get group name from submission file name
+    output_name = sf.split("-")[0]
+    output_folder_submission = os.path.join(output_folder, output_name)
+    # Either unzip...
+    if sf.endswith(".zip"):
+        zipfile.ZipFile(input_file).extractall(output_folder_submission)
+    # ... or unrar
+    elif sf.endswith(".rar"):
+        if not os.path.exists(output_folder_submission):
+            os.makedirs(output_folder_submission)
+        rf = rarfile.RarFile(input_file)
+        rf.extract(output_folder_submission)
 
-pattern = '*.rar'
-for root, dirs, files in os.walk(submission_folder):
-    for filename in fnmatch.filter(files, pattern):
-        temp_index = root.find('_assignsubmission')
-        temp_str = root[:temp_index]
-        print(temp_str)
-        save_path_for_output = os.path.join(output_folder, temp_str[temp_str.rfind("/") + 1:])
-        print(save_path_for_output)
-        print("raaaaaaaaaaaaaaaar:"+save_path_for_output)
-        print(save_path_for_output)
-        if not os.path.exists(save_path_for_output):
-                os.makedirs(save_path_for_output)
-        rf = rarfile.RarFile(os.path.join(root, filename))
-        rf.extract(save_path_for_output)
-
-# TODO Implement, insert records for every group in result structure ??
 
 # Plagiarism checker
 if args.plagcheck:
     print("Running check for plagiarism")
     # TODO Implement ??
 
+
 # Load task config
-# TODO Implement
-with open(os.path.join(exercise_folder,'tasks.json')) as config_file:    
-    config_data = json.load(config_file)
+with open(os.path.join(exercise_folder,'tasks.json')) as tasks_file:
+    tasks = json.load(tasks_file)
 
 
-print("------------------------------------------------")
-print("start of greading")
-print("------------------------------------------------")
-
-f_writ = open(output_file_name, 'w')
-fieldnames = ["Identifier", "Full name","Email address", "Status","Group","Grade","Maximum Grade","Grade can be changed","Last modified (submission)","Last modified (grade)","Feedback comments"]
-writer = csv.writer(f_writ, delimiter=',',
-                lineterminator='\r\n',
-                quotechar = "'"
-                )
-with open(input_file_name, 'r') as csvfile:
-    reader = csv.DictReader(csvfile, fieldnames=fieldnames)
-    for row in reader:
-        folder_name = row["Group"]+"-"+row["Full name"]+"_"+row["Identifier"][12:]
-        print((os.path.join(output_folder,folder_name)))
-        print(os.path.isdir(os.path.join(output_folder,folder_name)))
-        if os.path.isdir(os.path.join(output_folder,folder_name)):
-            print(folder_name+"	"+row["Identifier"])
-            total_mark=0
-            total_comment=''
-            for i in config_data:
-                print(i['params'])
-                p,c = run_evaluation(exercise_folder + i['evaluator'],os.path.join(output_folder , folder_name),"exercise",i['params'])
-                total_mark+=p
-                total_comment+=c
-            print(total_mark,total_comment)
-            row["Grade"]=total_mark
-            row["Feedback comments"]=total_comment
-            writer.writerow((['\"'+row["Identifier"]+'\"','\"'+row["Full name"]+'\"',row["Email address"],'\"'+row["Status"]+'\"','\"'+row["Group"]+'\"',row["Grade"],row["Maximum Grade"],row["Grade can be changed"],'\"'+(row["Last modified (submission)"])+'\"',row["Feedback comments"]]))
-
-
-
-
-
-"""
 # For every submission...
-for submission in []:
-    # ...and every task:
-    for task in []:
-        # Autograded task?
-        if not task.manually:
-            # Perform evaluation
-            points, comment = run_evaluation(task.name, submission, task.params)
-        else:
-            # Create placeholder
-            points, comment = -1, ''
-        # Store results in the result structure
-        # TODO Implement
-"""
-# Write result structure to file
-# TODO Implement
+submissions = [os.path.join(output_folder, sfolder) for sfolder in os.listdir(output_folder)]
+for submission in submissions:
+    if os.path.isdir(submission):
+        results = []
+        # ...and every task:
+        for task in tasks:
+            # Auto-graded task?
+            if not task["manually"]:
+                # Perform evaluation
+                points, comment = run_evaluation(task["name"], submission, task["params"])
+            else:
+                # Create placeholder
+                points, comment = -1, ''
+            # Store intermediate result
+            results.append({
+                "name": task["name"],
+                "points": points,
+                "total_points": task["total_points"],
+                "comment": comment
+                })
+
+        # Write (intermediate) results for this submission to file
+        json.dump(results, open(os.path.join(submission, "results.json"), "w"), indent=2)
