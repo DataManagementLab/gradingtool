@@ -1,29 +1,29 @@
 import argparse
-import imp
+import importlib
 import json
 import os
-import rarfile
 import zipfile
+import rarfile
 
 
-def run_evaluation(name, input_folder, exercise_folder, params=None):
+def run_evaluation(name, input_folder, exercise_folder, total_points, params=None):
     """
     Call evaluation function with the given name
 
     :param name: name of the evaluation function to call
     :param input_folder: folder containing the submission to evaluate
     :param exercise_folder: folder containing the current exercise
+    :param total_points: maximum of points that can be reached in this task
     :param params: additional parameters for evaluation function
     :return: points archived, additional comment/error message/...
     """
     if params is None:
-        params = []
+        params = {}
+    params["total_points"] = total_points
 
-    # TODO implement
-    print("run_evaluation :", name,input_folder,exercise_folder,params)
-    fo = imp.load_source('line_by_line', name+".py")
-    p, c = fo.line_by_line(input_folder,exercise_folder,params)
-    return p,c
+    evaluation_mod = importlib.import_module("evaluators."+name)
+    evaluation_function = getattr(evaluation_mod, name)
+    return evaluation_function(input_folder, exercise_folder, params)
 
 
 # Command line interface
@@ -89,7 +89,7 @@ for submission in submissions:
             # Auto-graded task?
             if not task["manually"]:
                 # Perform evaluation
-                points, comment = run_evaluation(task["name"], submission, task["params"])
+                points, comment = run_evaluation(task["evaluator"], submission, exercise_folder, task["total_points"], task["params"])
             else:
                 # Create placeholder
                 points, comment = -1, ''
