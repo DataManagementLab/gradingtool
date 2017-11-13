@@ -31,6 +31,8 @@ def line_by_line(input_folder, exercise_folder, params=None):
                 else:
                     comment += "Wrong answer for {}), should be {}. ".format(chr(97+i), reference_line.strip())
 
+    # One point less than the correct count of lines as you can simply infer the last answer
+    points = points - 1 if points > 0 else 0
     return points, comment.rstrip()
 
 
