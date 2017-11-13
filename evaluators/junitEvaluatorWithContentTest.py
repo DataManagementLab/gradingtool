@@ -1,6 +1,10 @@
 import os
 import subprocess
 import re
+import shlex
+
+def quote(string):
+    return string.replace(' ','\ ')
 
 def checkForString(input_file, checkString):
     checkResult = False
@@ -73,7 +77,7 @@ def junitEvaluatorWithContentTest(input_folder, exercise_folder, params=None):
     for f in params['java_files']:
         java_file = os.path.join(input_folder,f)
         if os.path.exists(java_file):
-            java_files += java_file + ' '
+            java_files += "'"+java_file + "' "
 
         else:
             comment += "Missing file " + java_file + " "
@@ -95,7 +99,8 @@ def junitEvaluatorWithContentTest(input_folder, exercise_folder, params=None):
 
     # compile code
     testing_jar = os.path.join(exercise_folder, params['testing_jar'])
-    cmd = params['javac_path'] + ' -d ' + compileDir + ' -cp ' + params['junit_jar_path'] + classpathSeperator + testing_jar + ' ' + java_files
+    classpath = params['junit_jar_path'] + classpathSeperator + testing_jar
+    cmd = params['javac_path'] + ' -d ' +  "'" + compileDir + "'" + ' -cp ' + "'" + classpath + "'" + ' ' + java_files
     print("Running following command: ", cmd)
     proc = subprocess.Popen(cmd, shell=True).wait()
 
@@ -110,9 +115,10 @@ def junitEvaluatorWithContentTest(input_folder, exercise_folder, params=None):
     # run Junit test
     for junit_test in params['junit_test_fqns']:
 
-        resultFile =  os.path.join(input_folder, 'result_' + junit_test + '.txt')
+        resultFile = os.path.join(input_folder, 'result_' + junit_test + '.txt')
         open(resultFile, 'a').close()
-        cmd = params['java_path'] + ' -cp ' + compileDir + classpathSeperator + params['hamcrest_jar_path'] + classpathSeperator +  params['junit_jar_path'] + classpathSeperator + testing_jar + ' org.junit.runner.JUnitCore '+ junit_test + ' > ' + resultFile + ' 2> ' + resultFile
+        classpath = compileDir + classpathSeperator + params['hamcrest_jar_path'] + classpathSeperator +  params['junit_jar_path'] + classpathSeperator + testing_jar
+        cmd = params['java_path'] + ' -cp ' + "'" + classpath + "'" + ' org.junit.runner.JUnitCore '+ junit_test + ' > ' + "'" +resultFile + "'"
         print("Running following command: ", cmd)
         proc = subprocess.Popen(cmd, shell=True).wait()
         # e.g. java -cp bin/:/Users/melhindi/Downloads/junit-4.12.jar:SDM_Exercise_02_Solution.jar:/Users/melhindi/Downloads/hamcrest-core-1.3.jar org.junit.runner.JUnitCore de.tuda.sdm.dmdb.test.TestSuiteDMDB
