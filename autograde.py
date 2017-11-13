@@ -3,7 +3,7 @@ import importlib
 import json
 import os
 import zipfile
-import rarfile
+import patoolib
 
 
 def run_evaluation(name, input_folder, exercise_folder, total_points, params=None):
@@ -37,6 +37,9 @@ parser.add_argument('output', metavar='output', type=str, nargs=1,
 parser.add_argument('--plagcheck', dest='plagcheck', action='store_const',
                     const=True, default=False,
                     help='Perform check for plagiarism')
+parser.add_argument('--skip-unzip', dest='skip_unzip', action='store_const',
+                    const=True, default=False,
+                    help='Skip unzip process')
 
 args = parser.parse_args()
 
@@ -51,21 +54,21 @@ if not os.path.exists(output_folder):
 
 
 # Unzip submissions and store the contentes in output folder
-submission_files = os.listdir(submission_folder)
-for sf in submission_files:
-    input_file = os.path.join(submission_folder, sf)
-    # Get group name from submission file name
-    output_name = sf.split("-")[0]
-    output_folder_submission = os.path.join(output_folder, output_name)
-    # Either unzip...
-    if sf.endswith(".zip"):
-        zipfile.ZipFile(input_file).extractall(output_folder_submission)
-    # ... or unrar
-    elif sf.endswith(".rar"):
-        if not os.path.exists(output_folder_submission):
-            os.makedirs(output_folder_submission)
-        rf = rarfile.RarFile(input_file)
-        rf.extract(output_folder_submission)
+if not args.skip_unzip:
+    submission_files = os.listdir(submission_folder)
+    for sf in submission_files:
+        input_file = os.path.join(submission_folder, sf)
+        # Get group name from submission file name
+        output_name = sf.split("-")[0]
+        output_folder_submission = os.path.join(output_folder, output_name)
+        # Either unzip...
+        if sf.endswith(".zip"):
+            zipfile.ZipFile(input_file).extractall(output_folder_submission)
+        # ... or unrar
+        elif sf.endswith(".rar"):
+            if not os.path.exists(output_folder_submission):
+                os.makedirs(output_folder_submission)
+            patoolib.extract_archive(input_file, outdir=output_folder_submission)
 
 
 # Plagiarism checker
@@ -83,6 +86,7 @@ with open(os.path.join(exercise_folder,'tasks.json')) as tasks_file:
 submissions = [os.path.join(output_folder, sfolder) for sfolder in os.listdir(output_folder)]
 for submission in submissions:
     if os.path.isdir(submission):
+        print(submission)
         results = []
         # ...and every task:
         for task in tasks:
