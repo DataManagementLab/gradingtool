@@ -94,7 +94,8 @@ def get_queries(sql_file, query_count):
                     queries[current_query_id] = current_query.replace(";", "").strip()
                     current_query = ""
                 # Get ID for query starting in the next line
-                current_query_id = int(re.findall(r'\d+', line)[0]) - 1
+                ids = re.findall(r'\d+', line)
+                current_query_id = int(ids[0]) - 1 if len(ids) > 0 else -1
             else:
                 # Combine multi-line queries (remove additional whitespace)
                 current_query += " " + line.strip()
