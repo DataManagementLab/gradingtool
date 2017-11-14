@@ -2,6 +2,7 @@ import argparse
 import importlib
 import json
 import os
+import shutil
 import zipfile
 import patoolib
 
@@ -24,6 +25,24 @@ def run_evaluation(name, input_folder, exercise_folder, total_points, params=Non
     evaluation_mod = importlib.import_module("evaluators."+name)
     evaluation_function = getattr(evaluation_mod, name)
     return evaluation_function(input_folder, exercise_folder, params)
+
+
+def flatten(current_path, base_path=None):
+    """
+    Flatten folder structure
+
+    :param current_path: current path for recursive walking
+    :param base_path: target folder (if None, current folder is target folder -- starting folder of recursion)
+    """
+    if base_path is None:
+        base_path = current_path
+    for file_or_dir in os.listdir(current_path):
+        file_or_dir_fullpath = os.path.join(current_path, file_or_dir)
+        if os.path.isfile(file_or_dir_fullpath):
+            if current_path != base_path:
+                shutil.move(file_or_dir_fullpath, base_path) #shutil.Error
+        else:
+            flatten(os.path.join(current_path, file_or_dir), base_path)
 
 
 # Command line interface
@@ -61,14 +80,20 @@ if not args.skip_unzip:
         # Get group name from submission file name
         output_name = sf.split("-")[0]
         output_folder_submission = os.path.join(output_folder, output_name)
-        # Either unzip...
-        if sf.endswith(".zip"):
-            zipfile.ZipFile(input_file).extractall(output_folder_submission)
-        # ... or unrar
-        elif sf.endswith(".rar"):
-            if not os.path.exists(output_folder_submission):
-                os.makedirs(output_folder_submission)
-            patoolib.extract_archive(input_file, outdir=output_folder_submission)
+
+        # Already present? Skip
+        if not os.path.isdir(output_folder_submission):
+            # Either unzip...
+            if sf.endswith(".zip"):
+                zipfile.ZipFile(input_file).extractall(output_folder_submission)
+            # ... or unrar
+            elif sf.endswith(".rar"):
+                if not os.path.exists(output_folder_submission):
+                    os.makedirs(output_folder_submission)
+                patoolib.extract_archive(input_file, outdir=output_folder_submission)
+            # Visit the newly created folder (if any) and flatten if necessary
+            if os.path.isdir(output_folder_submission):
+                flatten(output_folder_submission)
 
 
 # Plagiarism checker
