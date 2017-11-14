@@ -40,7 +40,10 @@ def flatten(current_path, base_path=None):
         file_or_dir_fullpath = os.path.join(current_path, file_or_dir)
         if os.path.isfile(file_or_dir_fullpath):
             if current_path != base_path:
-                shutil.move(file_or_dir_fullpath, base_path) #shutil.Error
+                try:
+                    shutil.move(file_or_dir_fullpath, base_path)
+                except shutil.Error:
+                    print(f"Could not move file {file_or_dir_fullpath}")
         else:
             flatten(os.path.join(current_path, file_or_dir), base_path)
 
