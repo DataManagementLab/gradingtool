@@ -20,7 +20,7 @@ def checkForString(input_file, checkString):
         m1 = re.search('//.*'+checkString+'.*', code)
         # If we have multiple multi-line comments this will match everything
         # Student are supposed to complain until better solution has been found
-        m2 = re.search('/\*([\s\S]*?'+checkString+'[\s\S]*?)\*/', code)
+        m2 = re.search('.*@Override[\s\S]*/\*([\s\S]*?'+checkString+'[\s\S]*?)\*/', code)
         if m1 or m2:
             #print("Match1",m1.group(0))
             #print("Match2",m2.group(0))
@@ -52,8 +52,12 @@ def parseTestResult(result_file, test_name=""):
             failed = int(m.group(2))
             return (total - failed), test_name + " failed\n" + fileHandle.read()
         else:
-            print("Unexpected result, pls. check following file", result_file)
-            return 0, "Pls. check with instructors"
+            m = re.search('Exception in thread "main" (.*)', resultLines[1])
+            if m:
+                return 0, test_name + ":"+m.group(1)
+            else:
+                print("Unexpected result, pls. check following file", result_file)
+                return 0, "Pls. check with instructors"
 
 def junitEvaluatorWithContentTest(input_folder, exercise_folder, params=None):
     """
@@ -80,7 +84,7 @@ def junitEvaluatorWithContentTest(input_folder, exercise_folder, params=None):
             java_files += "'"+java_file + "' "
 
         else:
-            comment += "Missing file " + java_file + " "
+            comment += "Missing file " + java_file.split('/')[-1] + " "
             stop = True
 
     # check if string is in submission
@@ -90,19 +94,24 @@ def junitEvaluatorWithContentTest(input_folder, exercise_folder, params=None):
             input_file = os.path.join(input_folder,f)
             if not checkForString(input_file,s):
                 comment += "Mandatory string '"+s+"' not found in file "+f
-                stop = True
+                points -= 1
 
     # create compilation directory
     compileDir = os.path.join(input_folder, "bin/")
     if not os.path.exists(compileDir):
         os.makedirs(compileDir)
 
+    # create log file
+    logFile = os.path.join(input_folder, 'logFile.txt')
+    fh_logFile = open(logFile, 'a')
+
     # compile code
     testing_jar = os.path.join(exercise_folder, params['testing_jar'])
-    classpath = params['junit_jar_path'] + classpathSeperator + testing_jar
-    cmd = params['javac_path'] + ' -d ' +  "'" + compileDir + "'" + ' -cp ' + "'" + classpath + "'" + ' ' + java_files
+    classpath = os.path.join(exercise_folder, params['junit_jar_path']) + classpathSeperator + testing_jar
+    cmd = params['javac_path'] + ' -d ' +  "'" + compileDir + "'" + ' -cp ' + "'" + classpath + "'" + ' ' + java_files 
     print("Running following command: ", cmd)
-    proc = subprocess.Popen(cmd, shell=True).wait()
+    proc = subprocess.Popen(cmd, shell=True, stdout=fh_logFile, stderr=fh_logFile).wait()
+    fh_logFile.close()
 
     # javac -d <compilation directory> -cp <junit-location>:<test-jar-location> <filenames>
     #e.g.: javac -d bin/ -cp ~/Downloads/junit-4.12.jar:SDM_Exercise_02_Solution.jar SQLInteger.java SQLVarchar.java RowPage.java HeapTable.java
@@ -116,11 +125,11 @@ def junitEvaluatorWithContentTest(input_folder, exercise_folder, params=None):
     for junit_test in params['junit_test_fqns']:
 
         resultFile = os.path.join(input_folder, 'result_' + junit_test + '.txt')
-        open(resultFile, 'a').close()
-        classpath = compileDir + classpathSeperator + params['hamcrest_jar_path'] + classpathSeperator +  params['junit_jar_path'] + classpathSeperator + testing_jar
-        cmd = params['java_path'] + ' -cp ' + "'" + classpath + "'" + ' org.junit.runner.JUnitCore '+ junit_test + ' > ' + "'" +resultFile + "'"
+        fh_resultFile = open(resultFile, 'a')
+        classpath = compileDir + classpathSeperator + os.path.join(exercise_folder, params['hamcrest_jar_path']) + classpathSeperator +  os.path.join(exercise_folder, params['junit_jar_path']) + classpathSeperator + testing_jar
+        cmd = params['java_path'] + ' -cp ' + "'" + classpath + "'" + ' org.junit.runner.JUnitCore '+ junit_test
         print("Running following command: ", cmd)
-        proc = subprocess.Popen(cmd, shell=True).wait()
+        proc = subprocess.Popen(cmd, shell=True, stdout=fh_resultFile, stderr=fh_resultFile).wait()
         # e.g. java -cp bin/:/Users/melhindi/Downloads/junit-4.12.jar:SDM_Exercise_02_Solution.jar:/Users/melhindi/Downloads/hamcrest-core-1.3.jar org.junit.runner.JUnitCore de.tuda.sdm.dmdb.test.TestSuiteDMDB
         # e.g. java -cp bin/:/Users/melhindi/Downloads/junit-4.12.jar:SDM_Exercise_02_Solution.jar:/Users/melhindi/Downloads/hamcrest-core-1.3.jar org.junit.runner.JUnitCore de.tuda.sdm.dmdb.test.storage.types.TestSQLInteger
         fileHandle = open(resultFile)
@@ -129,6 +138,10 @@ def junitEvaluatorWithContentTest(input_folder, exercise_folder, params=None):
         p, c = parseTestResult(resultFile, junit_test)
         points += p
         comment += c + "\n"
+        fh_resultFile.close()
+
+    if points < 0:
+        points = 0
 
     return points, comment.rstrip()
 
