@@ -52,13 +52,17 @@ with open(gradingsheet, 'r') as csvfile:
             results = json.load(open(results_file, "r"))
 
             # Calculate grade
-            points = sum(r["points"] for r in results)
-            total_points = sum(r["total_points"] for r in results)
-            passed = points / total_points >= passing_threshold
+            points = [r["points"] if r["points"] > 0 else 0 for r in results]
+            names = [r["name"] for r in results]
+            points_scored = sum(points)
+            total_points = [r["total_points"] for r in results]
+            total_points_possible = sum(total_points)
+            passed = points_scored / total_points_possible >= passing_threshold
             grade = 1 if passed else 0
 
             # Combine comment
-            comment_table  = "<br>".join(f"{r['name']}: {r['points']}/{r['total_points']}" for r in results)
+            comment_table  = "<br>".join(f"{n}: {p}/{tp}" for n, p, tp in zip(names, points, total_points))
+            comment_table += f"<br>{points_scored}/{total_points_possible} => Passed: {passed}"
             comment_details = "<br>".join(f"{r['name']}: {r['comment']}" for r in results if r['comment'] != "")
             comment = comment_table + "<br><br>" + comment_details
 
