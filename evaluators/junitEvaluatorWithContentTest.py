@@ -43,6 +43,7 @@ def parseTestResult(result_file, test_name=""):
     resultLine = resultLines[len(resultLines)-2]
     m = re.search('OK \((\d+) tests\)', resultLine)
     #print("'"+resultLine+"'")
+    comment = ""
     if m:
         return int(m.group(1)), test_name + " passed"
     else:
@@ -50,7 +51,12 @@ def parseTestResult(result_file, test_name=""):
         if m:
             total = int(m.group(1))
             failed = int(m.group(2))
-            return (total - failed), test_name + " failed\n" + fileHandle.read()
+            comment += test_name + " failed"+"\n"
+            for idx,line in enumerate(resultLines):
+                if re.match("^\d+\)", line, re.MULTILINE):
+                    comment += line + resultLines[idx+1]
+
+            return (total - failed), comment
         else:
             m = re.search('Exception in thread "main" (.*)', resultLines[1])
             if m:
