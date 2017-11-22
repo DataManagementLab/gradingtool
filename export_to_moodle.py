@@ -71,24 +71,19 @@ with open(gradingsheet, 'r') as csvfile:
 
             # Set current timestamp
             outputtimestamp = timestamp
-        else:
-            # No? Output default values
-            grade = 0
-            comment = ""
-            outputtimestamp = "-"
 
-        # Create and write output line
-        outputrow = [
-            row["Identifier"],
-            row["Full name"],
-            row["Email address"],
-            row["Status"],
-            row["Group"],
-            grade,
-            row["Maximum Grade"],
-            row["Grade can be changed"],
-            row["Last modified (submission)"],
-            outputtimestamp,
-            comment
-        ]
-        writer.writerow(outputrow)
+            # Create and write output line
+            outputrow = [
+                row["Identifier"],
+                row["Full name"],
+                row["Email address"],
+                row["Status"],
+                row["Group"],
+                grade,
+                row["Maximum Grade"],
+                row["Grade can be changed"],
+                row["Last modified (submission)"],
+                outputtimestamp,
+                comment
+            ]
+            writer.writerow(outputrow)
