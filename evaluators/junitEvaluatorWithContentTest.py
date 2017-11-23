@@ -99,7 +99,7 @@ def junitEvaluatorWithContentTest(input_folder, exercise_folder, params=None):
         for f,s in params['string_check'].items():
             input_file = os.path.join(input_folder,f)
             if not checkForString(input_file,s):
-                comment += "Mandatory string '"+s+"' not found in file "+f
+                comment += "Mandatory string '"+s+"' not found in file "+f+"\n"
                 points -= 1
 
     # create compilation directory
@@ -116,6 +116,7 @@ def junitEvaluatorWithContentTest(input_folder, exercise_folder, params=None):
     classpath = os.path.join(exercise_folder, params['junit_jar_path']) + classpathSeperator + testing_jar
     cmd = params['javac_path'] + ' -d ' +  "'" + compileDir + "'" + ' -cp ' + "'" + classpath + "'" + ' ' + java_files 
     print("Running following command: ", cmd)
+    fh_logFile.write("Running following command: "+cmd+"\n")
     proc = subprocess.Popen(cmd, shell=True, stdout=fh_logFile, stderr=fh_logFile).wait()
     fh_logFile.close()
 
@@ -135,6 +136,7 @@ def junitEvaluatorWithContentTest(input_folder, exercise_folder, params=None):
         classpath = compileDir + classpathSeperator + os.path.join(exercise_folder, params['hamcrest_jar_path']) + classpathSeperator +  os.path.join(exercise_folder, params['junit_jar_path']) + classpathSeperator + testing_jar
         cmd = params['java_path'] + ' -cp ' + "'" + classpath + "'" + ' org.junit.runner.JUnitCore '+ junit_test
         print("Running following command: ", cmd)
+        fh_resultFile.write("Running following command: "+cmd+"\n")
         proc = subprocess.Popen(cmd, shell=True, stdout=fh_resultFile, stderr=fh_resultFile).wait()
         # e.g. java -cp bin/:/Users/melhindi/Downloads/junit-4.12.jar:SDM_Exercise_02_Solution.jar:/Users/melhindi/Downloads/hamcrest-core-1.3.jar org.junit.runner.JUnitCore de.tuda.sdm.dmdb.test.TestSuiteDMDB
         # e.g. java -cp bin/:/Users/melhindi/Downloads/junit-4.12.jar:SDM_Exercise_02_Solution.jar:/Users/melhindi/Downloads/hamcrest-core-1.3.jar org.junit.runner.JUnitCore de.tuda.sdm.dmdb.test.storage.types.TestSQLInteger
