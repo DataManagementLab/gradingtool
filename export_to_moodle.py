@@ -50,8 +50,11 @@ with open(gradingsheet, 'r') as csvfile:
         if not row["Status"].startswith("No submission"):
             # Yes? Calculate grade and create comment
 
+            # Check if result of submission exists, this is relevant if we have to re-run the correction for only a few groups
             # Open results of submission
             results_file = os.path.join(results_folder, row["Group"], "results.json")
+            if not os.path.exists(results_file):
+                continue
             results = json.load(open(results_file, "r"))
 
             # Calculate grade
