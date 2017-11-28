@@ -111,9 +111,15 @@ def junitEvaluatorWithContentTest(input_folder, exercise_folder, params=None):
     logFile = os.path.join(input_folder, 'logFile.txt')
     fh_logFile = open(logFile, 'a')
 
+    # assemble class path
+    classpath = ""
+    classpath += os.path.join(exercise_folder, params['testing_jar'])
+    classpath += classpathSeperator + os.path.join(exercise_folder, params['junit_jar_path'])
+    if 'additional_jars' in params:
+        for f in params['additional_jars']:
+            classpath += classpathSeperator + os.path.join(exercise_folder, f)
+
     # compile code
-    testing_jar = os.path.join(exercise_folder, params['testing_jar'])
-    classpath = os.path.join(exercise_folder, params['junit_jar_path']) + classpathSeperator + testing_jar
     cmd = params['javac_path'] + ' -d ' +  "'" + compileDir + "'" + ' -cp ' + "'" + classpath + "'" + ' ' + java_files 
     print("Running following command: ", cmd)
     fh_logFile.write("Running following command: "+cmd+"\n")
@@ -128,12 +134,15 @@ def junitEvaluatorWithContentTest(input_folder, exercise_folder, params=None):
         comment += "\nPls. check with instructor if neccessary."
         return 0, comment.rstrip()
 
+    # extend classpath with compiled submission files
+    classpath += classpathSeperator + compileDir
+    classpath += classpathSeperator + os.path.join(exercise_folder, params['hamcrest_jar_path']) 
+
     # run Junit test
     for junit_test in params['junit_test_fqns']:
 
         resultFile = os.path.join(input_folder, 'result_' + junit_test + '.txt')
         fh_resultFile = open(resultFile, 'a')
-        classpath = compileDir + classpathSeperator + os.path.join(exercise_folder, params['hamcrest_jar_path']) + classpathSeperator +  os.path.join(exercise_folder, params['junit_jar_path']) + classpathSeperator + testing_jar
         cmd = params['java_path'] + ' -cp ' + "'" + classpath + "'" + ' org.junit.runner.JUnitCore '+ junit_test
         print("Running following command: ", cmd)
         fh_resultFile.write("Running following command: "+cmd+"\n")
