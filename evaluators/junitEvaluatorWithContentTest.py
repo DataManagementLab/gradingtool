@@ -12,6 +12,10 @@ def checkForString(input_file, checkString):
         return False
     fileHandle = open(input_file)
     code = fileHandle.read()
+    #remove Umlauts from the code
+    for ch in ['Ä', 'ä','Ö','ö','ü','Ü','ß']:
+        if ch in code:
+            code = code.replace(ch,'@')
     m = re.search('.*'+checkString+'.*', code)
     if m:
         #print("Match",m.group(0))
