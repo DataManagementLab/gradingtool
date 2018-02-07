@@ -3,8 +3,9 @@ import shutil
 import mosspy
 from bs4 import BeautifulSoup
 import re, csv
+import argparse
 
-def Check(output,plagiarism_base_folder,exercise_folder,plagiarism_folder="plagiarism_output_folder",threshold=20):
+def Check(output,plagiarism_base_folder,exercise_folder,plagiarism_folder,threshold):
     #output = "output"
     #plagiarism_folder = "plagiarism_output_folder"
     #plagiarism_base_folder = "base"
@@ -95,11 +96,32 @@ def Check(output,plagiarism_base_folder,exercise_folder,plagiarism_folder="plagi
                     total_temp.append(temp)
                     break
 
-    with open("out.csv", "a") as f:
+    with open(plagiarism_folder+"/out.csv", "a") as f:
         wr = csv.writer(f)
         wr.writerow(headers)
         wr.writerows(total_temp)
     return None
 
 if __name__ == '__main__':
+    # Command line interface
+    parser = argparse.ArgumentParser(description='Checking for plagiarism')
+
+    parser.add_argument('plagiarism_base_folder', metavar='plagiarism_base_folder', type=str, nargs=1,
+                        help='plagiarism base folder containing the stencil codes')
+    parser.add_argument('output', metavar='output', type=str, nargs='?', default='output',
+                        help='output folder containing the exercise extracted files')
+    parser.add_argument('exercise_folder', metavar='exercise_folder', type=str, nargs='?',default="exercise",
+                        help='exercise folder contain tasks.json')
+    parser.add_argument('plagiarism_folder', metavar='plagiarism_folder', type=str, nargs='?',default="plagiarism_output_folder",
+                        help='Making plagiarism_output_folder containing output folder of reports')
+    parser.add_argument('threshold', metavar='threshold', type=int, nargs='?', default=20,
+                        help='Threshold to ignore reports with below percentages of similarity')
+    args = parser.parse_args()
+
+    output = args.output[0]
+    plagiarism_base_folder = args.plagiarism_base_folder[0]
+    exercise_folder = args.exercise_folder[0]
+    plagiarism_folder = args.plagiarism_folder[0]
+    threshold = args.threshold[0]
+
     Check(output,plagiarism_base_folder,exercise_folder,plagiarism_folder="plagiarism_output_folder",threshold=20)

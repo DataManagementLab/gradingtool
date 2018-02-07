@@ -44,6 +44,9 @@ with open(gradingsheet, 'r') as csvfile:
     reader = csv.DictReader(csvfile, fieldnames=fieldnames)
     next(reader)
 
+    submission_count = 0
+    passed_count = 0
+
     # For all entries (rows) in csv...
     for row in reader:
         # ...check if there is a submission
@@ -90,3 +93,10 @@ with open(gradingsheet, 'r') as csvfile:
                 comment
             ]
             writer.writerow(outputrow)
+
+            submission_count += 1
+            if passed:
+                passed_count += 1
+
+print(f"Exportet results to {moodle_import_file.name}")
+print(f"{passed_count}/{submission_count} ({passed_count/submission_count*100:.2f}%) passed.")
