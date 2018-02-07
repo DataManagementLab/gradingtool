@@ -62,6 +62,9 @@ parser.add_argument('--plagcheck', dest='plagcheck', action='store_const',
 parser.add_argument('--skip-unzip', dest='skip_unzip', action='store_const',
                     const=True, default=False,
                     help='Skip unzip process')
+parser.add_argument('--skip-flatten', dest='skip_flatten', action='store_const',
+                    const=True, default=False,
+                    help='Skip flatten of submission (removal of folders)')
 
 args = parser.parse_args()
 
@@ -95,7 +98,7 @@ if not args.skip_unzip:
                     os.makedirs(output_folder_submission)
                 patoolib.extract_archive(input_file, outdir=output_folder_submission)
             # Visit the newly created folder (if any) and flatten if necessary
-            if os.path.isdir(output_folder_submission):
+            if not args.skip_flatten and os.path.isdir(output_folder_submission):
                 flatten(output_folder_submission)
 
 
