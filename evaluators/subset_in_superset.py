@@ -52,6 +52,10 @@ def subset_in_superset(input_folder, exercise_folder, params=None):
 
 
 if __name__ == "__main__":
-    p, c = line_by_line("../sample/output/91", "../sample/exercise/", {'filename': 'answer_1.txt', 'reference': 'reference_1.txt'})
+    p, c = subset_in_superset("../sample/output/91", "../sample/exercise/", {"filename": "answer_subset_in_superset.txt",
+      "reference": "reference_subset_in_superset.txt",
+      "separator": ";",
+      "elements_in_lines" : [6,4,1]
+    })
     print(p)
     print(c)
