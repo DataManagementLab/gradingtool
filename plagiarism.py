@@ -16,6 +16,7 @@ def Check(output,plagiarism_base_folder,exercise_folder,plagiarism_folder,thresh
         os.makedirs(plagiarism_folder)
 
     # read task config
+    files = []
     task_file = os.path.join(exercise_folder, 'tasks.json')
     with open(task_file) as tasksFH:
         tasks = json.load(tasksFH)
@@ -23,7 +24,7 @@ def Check(output,plagiarism_base_folder,exercise_folder,plagiarism_folder,thresh
         # Autograded task?
         if not task['manually']:
             # Perform evaluation
-            files = task['plagiarism_base_files']
+            files.extend(task['plagiarism_base_files'])
 
     # flattening files
     dirs = [f for f in os.listdir(output) if os.path.isdir(os.path.join(output, f))]
@@ -118,10 +119,10 @@ if __name__ == '__main__':
                         help='Threshold to ignore reports with below percentages of similarity')
     args = parser.parse_args()
 
-    output = args.output[0]
     plagiarism_base_folder = args.plagiarism_base_folder[0]
-    exercise_folder = args.exercise_folder[0]
-    plagiarism_folder = args.plagiarism_folder[0]
-    threshold = args.threshold[0]
+    output = args.output
+    exercise_folder = args.exercise_folder
+    plagiarism_folder = args.plagiarism_folder
+    threshold = args.threshold
 
-    Check(output,plagiarism_base_folder,exercise_folder,plagiarism_folder="plagiarism_output_folder",threshold=20)
+    Check(output,plagiarism_base_folder,exercise_folder,plagiarism_folder,threshold)
