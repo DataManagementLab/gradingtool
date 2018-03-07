@@ -2,20 +2,51 @@ import os
 import subprocess
 import re
 import shlex
+from shutil import copyfile
 
-def quote(string):
-    return string.replace(' ','\ ')
 
-def checkForString(input_file, checkString):
-    checkResult = False
+def prepareStudentCode(input_file):
+    """
+    Prepare the student code for compiliation
+    This removes umlauts from the code to avoid compilation/encoding errors
+    It also removes "System.out.print" statements to prevent code from running too long.
+    The original file will be backed up as .back file
+
+    :param input_file: The file (path) which to prepare 
+    """
     if not os.path.exists(input_file):
+        print("The following path does not exists", input_file)
         return False
-    fileHandle = open(input_file)
-    code = fileHandle.read()
+    # backup origFile
+    copyfile(input_file,input_file+".back")
+    
+    fileHandleRead = open(input_file, 'r')
+    code = fileHandleRead.read()
     #remove Umlauts from the code
     for ch in ['Ä', 'ä','Ö','ö','ü','Ü','ß']:
         if ch in code:
             code = code.replace(ch,'@')
+    code = code.replace('System.out.print','//System.out.print')
+    fileHandleRead.close()
+    fileHandleWrite = open(input_file, 'w')
+    fileHandleWrite.write(code)
+    fileHandleWrite.close()
+
+
+def checkForString(input_file, checkString):
+    """
+    Determines whether the given string appears in the given file or not
+
+    :param input_file: The file (path) in which to check for appreance of string
+    :param checkString: String which has to appear in the input_file
+    :return boolean, true if checkString appears in input_file, false otherwise
+    """
+    checkResult = False
+    if not os.path.exists(input_file):
+        print("The following path does not exists", input_file)
+        return False
+    fileHandle = open(input_file)
+    code = fileHandle.read()
     m = re.search('.*'+checkString+'.*', code)
     if m:
         #print("Match",m.group(0))
@@ -49,7 +80,7 @@ def parseTestResult(result_file, test_name=""):
     #print("'"+resultLine+"'")
     comment = ""
     if m:
-        return int(m.group(1)), test_name + " passed"
+        return int(m.group(1)), test_name + ": passed "
     else:
         m = re.search('Tests run: (\d+),  Failures: (\d+)', resultLine )
         if m:
@@ -64,10 +95,10 @@ def parseTestResult(result_file, test_name=""):
         else:
             m = re.search('Exception in thread "main" (.*)', resultLines[1])
             if m:
-                return 0, test_name + ":"+m.group(1)
+                return 0, test_name + ": "+m.group(1)
             else:
                 print("Unexpected result, pls. check following file", result_file)
-                return 0, "Pls. check with instructors"
+                return 0, test_name + ": Pls. check with instructors "
 
 def junitEvaluatorWithContentTest(input_folder, exercise_folder, params=None):
     """
@@ -92,6 +123,8 @@ def junitEvaluatorWithContentTest(input_folder, exercise_folder, params=None):
         java_file = os.path.join(input_folder,f)
         if os.path.exists(java_file):
             java_files += "'"+java_file + "' "
+            # prepare code for automated evaluation
+            prepareStudentCode(java_file)
 
         else:
             comment += "Missing file " + java_file.split('/')[-1] + " "
@@ -142,6 +175,7 @@ def junitEvaluatorWithContentTest(input_folder, exercise_folder, params=None):
     classpath += classpathSeperator + compileDir
     classpath += classpathSeperator + os.path.join(exercise_folder, params['hamcrest_jar_path']) 
 
+    TIMEOUT_TIME = 60
     # run Junit test
     for junit_test in params['junit_test_fqns']:
 
@@ -150,11 +184,18 @@ def junitEvaluatorWithContentTest(input_folder, exercise_folder, params=None):
         cmd = params['java_path'] + ' -cp ' + "'" + classpath + "'" + ' org.junit.runner.JUnitCore '+ junit_test
         print("Running following command: ", cmd)
         fh_resultFile.write("Running following command: "+cmd+"\n")
-        proc = subprocess.Popen(cmd, shell=True, stdout=fh_resultFile, stderr=fh_resultFile).wait()
+        try:
+            proc = subprocess.Popen(cmd, shell=True, stdout=fh_resultFile, stderr=fh_resultFile)
+            proc.wait(timeout=TIMEOUT_TIME) # wait in seconds
+        except subprocess.TimeoutExpired as err:
+            print("Catched TimeoutExpired exception after " + str(TIMEOUT_TIME) + " seconds, writing into result file")
+            fh_resultFile.write("Exception in thread \"main\": " + str(err))
+            print("Killing the child process")
+            proc.kill()
         # e.g. java -cp bin/:/Users/melhindi/Downloads/junit-4.12.jar:SDM_Exercise_02_Solution.jar:/Users/melhindi/Downloads/hamcrest-core-1.3.jar org.junit.runner.JUnitCore de.tuda.sdm.dmdb.test.TestSuiteDMDB
         # e.g. java -cp bin/:/Users/melhindi/Downloads/junit-4.12.jar:SDM_Exercise_02_Solution.jar:/Users/melhindi/Downloads/hamcrest-core-1.3.jar org.junit.runner.JUnitCore de.tuda.sdm.dmdb.test.storage.types.TestSQLInteger
-        fileHandle = open(resultFile)
-        resultLines = fileHandle.readlines()
+        #fileHandle = open(resultFile)
+        #resultLines = fileHandle.readlines()
         #print(resultLines)
         p, c = parseTestResult(resultFile, junit_test)
         points += p
