@@ -1,4 +1,3 @@
 patool==1.12
-lxml==3.7.3
+lxml==4.1.1
 mosspy==1.0.5
-
