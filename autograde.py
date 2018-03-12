@@ -22,6 +22,10 @@ def run_evaluation(name, input_folder, exercise_folder, total_points, params=Non
         params = {}
     params["total_points"] = total_points
 
+    # Run evaluator on subfolder if specified in task description
+    if "subfolder" in params:
+        input_folder = os.path.join(input_folder, params["subfolder"])
+
     evaluation_mod = importlib.import_module("evaluators."+name)
     evaluation_function = getattr(evaluation_mod, name)
     return evaluation_function(input_folder, exercise_folder, params)
@@ -56,9 +60,6 @@ parser.add_argument('submissions', metavar='submissions', type=str, nargs=1,
                     help='folder containing the submissions')
 parser.add_argument('output', metavar='output', type=str, nargs=1,
                     help='output folder (will contain grade table, unziped files, test run results, ...')
-parser.add_argument('--plagcheck', dest='plagcheck', action='store_const',
-                    const=True, default=False,
-                    help='Perform check for plagiarism')
 parser.add_argument('--skip-unzip', dest='skip_unzip', action='store_const',
                     const=True, default=False,
                     help='Skip unzip process')
@@ -100,12 +101,6 @@ if not args.skip_unzip:
             # Visit the newly created folder (if any) and flatten if necessary
             if not args.skip_flatten and os.path.isdir(output_folder_submission):
                 flatten(output_folder_submission)
-
-
-# Plagiarism checker
-if args.plagcheck:
-    print("Running check for plagiarism")
-    # TODO Implement ??
 
 
 # Load task config

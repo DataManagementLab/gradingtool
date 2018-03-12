@@ -15,7 +15,6 @@ install depencies using ``pip install -r requirements.txt``
     
     optional arguments:
       -h, --help	show this help message and exit
-      --plagcheck	Perform check for plagiarism
       --skip-unzip    Skip unzip process
       --skip-flatten  Skip flatten of submission (removal of folders)
 
