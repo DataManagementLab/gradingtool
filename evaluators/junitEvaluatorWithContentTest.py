@@ -168,7 +168,7 @@ def junitEvaluatorWithContentTest(input_folder, exercise_folder, params=None):
 
     # We stop after compilation since sometimes following assignments depend on the compiled sources
     if stop:
-        comment += "\nPls. check with instructor if neccessary."
+        comment += "<br>Pls. check with instructor if necessary."
         return 0, comment.rstrip()
 
     # extend classpath with compiled submission files
@@ -198,8 +198,9 @@ def junitEvaluatorWithContentTest(input_folder, exercise_folder, params=None):
         #resultLines = fileHandle.readlines()
         #print(resultLines)
         p, c = parseTestResult(resultFile, junit_test)
+        c = '<br>'.join(c.splitlines())
         points += p
-        comment += c + "\n"
+        comment += c + "<br>"
         fh_resultFile.close()
 
     if points < 0:
