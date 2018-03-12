@@ -4,7 +4,9 @@ import os
 
 def compare_json(input_folder, exercise_folder, params=None):
     """
-    Compares an input file line by line with a reference file and counts the correct line
+    Compares two json files using knowledge about their internal structure
+
+    Currently, this is really targeted at the favorites json structure
 
     :param input_folder: folder containing the submission
     :param exercise_folder: folder containing the current exercise
@@ -16,7 +18,7 @@ def compare_json(input_folder, exercise_folder, params=None):
     comment = ""
 
     for f in params['filenames']:
-        input_f = os.path.join(input_folder, "application", f)
+        input_f = os.path.join(input_folder, f)
         if not os.path.exists(input_f):
             comment += f"Could not create {f} due to syntax or import error(s). "
             continue
