@@ -8,7 +8,7 @@ import datetime
 try:
     locale.setlocale(locale.LC_ALL, 'DE')
 except:
-    locale.setlocale(locale.LC_ALL, 'de_DE')
+    locale.setlocale(locale.LC_ALL, 'de_DE.utf8')
 timestamp = f"{datetime.datetime.now():%A, %d %B %Y, %H:%M}"
 
 
