@@ -18,26 +18,41 @@ def compare_json(input_folder, exercise_folder, params=None):
     for f in params['filenames']:
         input_f = os.path.join(input_folder, "application", f)
         if not os.path.exists(input_f):
-            comment += f"{f}: File missing. "
-            break
+            comment += f"Could not create {f} due to syntax or import error(s). "
+            continue
         with open(input_f) as input_file, open(os.path.join(exercise_folder, f)) as reference_file:
             user_file_json = json.load(input_file)
             reference_json = json.load(reference_file)
 
-            if len(user_file_json) < len(reference_json):
+            error = False
+
+            reference_names = set(e["userName"] for e in reference_json if "userName" in e and "mostVisited" in e and len(e["mostVisited"]) > 0)
+            user_names = set(e["userName"] for e in user_file_json if "userName" in e and "mostVisited" in e and len(e["mostVisited"]) > 0)
+
+            if len(user_names) < len(reference_names):
                 comment += f"{f}: Entries missing. "
-            elif len(user_file_json) > len(reference_json):
+                error = True
+            elif len(user_names) > len(reference_names):
                 comment += f"{f}: Too many entries. "
+                error = True
             else:
                 reference_dict = {}
                 for ref_entry in reference_json:
                     reference_dict[ref_entry["userName"]] = set(ref_entry["mostVisited"])
 
                 for user_entry in user_file_json:
-                    if reference_dict[user_entry["userName"]] != set(user_entry["mostVisited"]):
-                        comment += f"{f}: Returned wrong favorites. "
+                    if "userName" not in user_entry or "mostVisited" not in user_entry:
+                        comment + f"{f}: Invalid format. "
+                        error = True
+                    else:
+                        user_name = user_entry["userName"]
+                        if user_name not in reference_dict or reference_dict[user_name] != set(user_entry["mostVisited"]):
+                            comment += f"{f}: Returned wrong favorites. "
+                            error = True
+                            break
 
-        points += params['points']
+            if not error:
+                points += params['points']
 
     return points, comment.rstrip()
 
