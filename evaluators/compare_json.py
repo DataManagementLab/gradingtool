@@ -37,12 +37,12 @@ def compare_json(input_folder, exercise_folder, params=None):
                     if reference_dict[user_entry["userName"]] != set(user_entry["mostVisited"]):
                         comment += f"{f}: Returned wrong favorites. "
 
-        points += 1
+        points += params['points']
 
     return points, comment.rstrip()
 
 
 if __name__ == "__main__":
-    p, c = compare_json("../sample/output/91", "../sample/exercise/", {'filenames': ['favorites_small.json', 'favorites_big.json']})
+    p, c = compare_json("../sample/output/91", "../sample/exercise/", {'filenames': ['favorites_small.json', 'favorites_big.json'], 'points': 4.5})
     print(p)
     print(c)
