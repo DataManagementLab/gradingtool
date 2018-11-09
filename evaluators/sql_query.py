@@ -2,6 +2,7 @@ import os
 import sqlite3
 import re
 
+from utils import robust_filereader
 
 def sql_query(input_folder, exercise_folder, params=None):
     """
@@ -31,10 +32,10 @@ def sql_query(input_folder, exercise_folder, params=None):
         c = conn.cursor()
 
         # Open input file, reference file & pointing schema
-        with open(input_file_name) as input_file, open(reference_file_name) as reference_file, open(points_file_name) as points_file:
+        with open(points_file_name) as points_file:
             # Extract queries from submission and reference file
-            queries_student = get_queries(input_file, params['query_count'])
-            queries_reference = get_queries(reference_file, params['query_count'])
+            queries_student = get_queries(input_file_name, params['query_count'])
+            queries_reference = get_queries(reference_file_name, params['query_count'])
 
             # Load pointing schema
             max_points = []
@@ -70,7 +71,7 @@ def sql_query(input_folder, exercise_folder, params=None):
     return points, comment.rstrip()
 
 
-def get_queries(sql_file, query_count):
+def get_queries(sql_file_name, query_count):
     """
     Extract queries from file
 
@@ -83,7 +84,7 @@ def get_queries(sql_file, query_count):
     current_query_id = -1
 
     # Parse file line by line
-    for line in sql_file:
+    for line in robust_filereader(sql_file_name, as_lines=True, try_naive=True):
         # Ignore comments
         if not line.startswith("--"):
             # Find markers for new queries
