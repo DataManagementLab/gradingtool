@@ -6,6 +6,8 @@ import shutil
 import zipfile
 import patoolib
 
+from utils import results_writer
+
 
 def run_evaluation(name, input_folder, exercise_folder, total_points, params=None):
     """
@@ -66,6 +68,9 @@ parser.add_argument('--skip-unzip', dest='skip_unzip', action='store_const',
 parser.add_argument('--skip-flatten', dest='skip_flatten', action='store_const',
                     const=True, default=False,
                     help='Skip flatten of submission (removal of folders)')
+parser.add_argument('--overwrite-results', dest='overwrite_results', action='store_const',
+                    const=True, default=False,
+                    help='Perform no merging of results for already graded tasks (manually graded are overwritten)')
 
 args = parser.parse_args()
 
@@ -132,4 +137,4 @@ for submission in submissions:
             })
 
         # Write (intermediate) results for this submission to file
-        json.dump(results, open(os.path.join(submission, "results.json"), "w"), indent=2)
+        results_writer(os.path.join(submission, "results.json"), results, tasks, force_overwrite=args.overwrite_results)
