@@ -24,7 +24,7 @@ def subset_in_superset(input_folder, exercise_folder, params=None):
     reference_file_name = os.path.join(exercise_folder, params['reference'])
 
     if not os.path.exists(input_file_name):
-        comment = "No submission for this task"
+        comment = "No submission for this task\n"
     else:
         # Open input file and reference file
         with open(input_file_name) as input_file, open(reference_file_name) as reference_file:
@@ -43,7 +43,7 @@ def subset_in_superset(input_folder, exercise_folder, params=None):
                             points += 1
                         # Otherwise, create a comment, stating which element was wrong
                         else:
-                            comment += "Wrong answer " +  student_set[index] +"! "
+                            comment += f"Wrong answer {student_set[index]}!\n"
 
     # One point less than the correct count of lines as you can simply infer the last answer
     if "reduce" in params and params["reduce"]:

@@ -129,7 +129,7 @@ for submission in submissions:
                 "points": points,
                 "total_points": task["total_points"],
                 "comment": comment
-                })
+            })
 
         # Write (intermediate) results for this submission to file
         json.dump(results, open(os.path.join(submission, "results.json"), "w"), indent=2)

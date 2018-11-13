@@ -25,7 +25,7 @@ def sql_query(input_folder, exercise_folder, params=None):
 
     # Is there a submission?
     if not os.path.exists(input_file_name):
-        comment = "No submission for this task"
+        comment = "No submission for this task\n"
     else:
         # Connect to database
         conn = sqlite3.connect(db)
@@ -60,13 +60,13 @@ def sql_query(input_folder, exercise_folder, params=None):
                         else:
                             # No complete match? Try to assess the difference automatically and write a comment
                             if len(result_reference) > len(result_student):
-                                comment += f"{i+1}) Results missing"
+                                comment += f"{i+1}) Results missing\n"
                             elif len(result_reference) < len(result_student):
-                                comment += f"{i+1}) Too many results"
+                                comment += f"{i+1}) Too many results\n"
                             else:
-                                comment += f"{i+1}) Wrong results or wrong order"
+                                comment += f"{i+1}) Wrong results or wrong order\n"
                     except sqlite3.OperationalError:
-                        comment += f"{i+1}) Invalid syntax. "
+                        comment += f"{i+1}) Invalid syntax.\n"
 
     return points, comment.rstrip()
 

@@ -38,6 +38,10 @@ writer = csv.writer(moodle_import_file, delimiter=',', quotechar='"', linetermin
 writer.writerow(fieldnames)
 
 
+def nl2html(comment):
+    return comment.strip().replace('\n', '<br>')
+
+
 # Open result file
 with open(gradingsheet, 'r') as csvfile:
     # Read gradingsheet line by line (ignore first line)
@@ -61,19 +65,23 @@ with open(gradingsheet, 'r') as csvfile:
             results = json.load(open(results_file, "r"))
 
             # Calculate grade
-            points = [r["points"] if r["points"] > 0 else 0 for r in results]
             names = [r["name"] for r in results]
-            points_scored = sum(points)
+            points = [r["points"] if r["points"] > 0 else 0 for r in results]
             total_points = [r["total_points"] for r in results]
+            comments = [nl2html(r["comment"]) for r in results]
+
+            points_scored = sum(points)
             total_points_possible = sum(total_points)
             passed = points_scored / total_points_possible >= passing_threshold
             grade = 1 if passed else 0
 
             # Combine comment
-            comment_table  = "<br>".join(f"{n}: {p}/{tp}" for n, p, tp in zip(names, points, total_points))
-            comment_table += f"<br>{points_scored}/{total_points_possible} => Passed: {passed}"
-            comment_details = "<br>".join(f"{r['name']}: {r['comment']}" for r in results if r['comment'] != "")
-            comment = comment_table + "<br><br>" + comment_details
+            comment = "<table>"
+            comment += "<tr><th>Task</th><th>Points</th><th>Comment</th></tr>"
+            for n, p, tp, c in zip(names, points, total_points, comments):
+                comment += f"<tr><td valign=\"top\">{n}</td><td valign=\"top\" align=\"right\">{p}/{tp}</td><td>{c}</td></tr>"
+            comment += "</table>"
+            comment += f"<br><br>{points_scored}/{total_points_possible} => Passed: {passed}"
 
             # Set current timestamp
             outputtimestamp = timestamp
@@ -98,5 +106,5 @@ with open(gradingsheet, 'r') as csvfile:
             if passed:
                 passed_count += 1
 
-print(f"Exportet results to {moodle_import_file.name}")
+print(f"Exported results to {moodle_import_file.name}")
 print(f"{passed_count}/{submission_count} ({passed_count/submission_count*100:.2f}%) passed.")

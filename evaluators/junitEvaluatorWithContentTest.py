@@ -12,14 +12,14 @@ def prepareStudentCode(input_file):
     It also removes "System.out.print" statements to prevent code from running too long.
     The original file will be backed up as .back file
 
-    :param input_file: The file (path) which to prepare 
+    :param input_file: The file (path) which to prepare
     """
     if not os.path.exists(input_file):
         print("The following path does not exists", input_file)
         return False
     # backup origFile
     copyfile(input_file,input_file+".back")
-    
+
     fileHandleRead = open(input_file, 'r')
     code = fileHandleRead.read()
     #remove Umlauts from the code
@@ -51,6 +51,7 @@ def checkForString(input_file, checkString):
     if m:
         #print("Match",m.group(0))
         checkResult = True
+        # TODO
         # if the string is surrounded in a comment then we assume it is not used
         m1 = re.search('//.*'+checkString+'.*', code)
         # If we have multiple multi-line comments this will match everything
@@ -70,7 +71,7 @@ def parseTestResult(result_file, test_name=""):
     :param result_file: The result file to parse/evaluate
     :return points, comment
     """
-    
+
     fileHandle = open(result_file)
     resultLines = fileHandle.readlines()
     #print(resultLines)
@@ -80,13 +81,13 @@ def parseTestResult(result_file, test_name=""):
     #print("'"+resultLine+"'")
     comment = ""
     if m:
-        return int(m.group(1)), test_name + ": passed "
+        return int(m.group(1)), f"{test_name}: passed\n"
     else:
         m = re.search('Tests run: (\d+),  Failures: (\d+)', resultLine )
         if m:
             total = int(m.group(1))
             failed = int(m.group(2))
-            comment += test_name + " failed"+"\n"
+            comment += f"{test_name} failed\n"
             for idx,line in enumerate(resultLines):
                 if re.match("^\d+\)", line, re.MULTILINE):
                     comment += line + resultLines[idx+1]
@@ -95,10 +96,10 @@ def parseTestResult(result_file, test_name=""):
         else:
             m = re.search('Exception in thread "main" (.*)', resultLines[1])
             if m:
-                return 0, test_name + ": "+m.group(1)
+                return 0, f"{test_name}: f{m.group(1)}"
             else:
                 print("Unexpected result, pls. check following file", result_file)
-                return 0, test_name + ": Pls. check with instructors "
+                return 0, f"{test_name}: Pls. check with instructors\n"
 
 def junitEvaluatorWithContentTest(input_folder, exercise_folder, params=None):
     """
@@ -116,7 +117,7 @@ def junitEvaluatorWithContentTest(input_folder, exercise_folder, params=None):
 
     if os.name == 'nt':
         classpathSeperator = ';'
-    
+
     stop = False
     java_files = ''
     for f in params['java_files']:
@@ -127,7 +128,7 @@ def junitEvaluatorWithContentTest(input_folder, exercise_folder, params=None):
             prepareStudentCode(java_file)
 
         else:
-            comment += "Missing file " + java_file.split('/')[-1] + " "
+            comment += f"Missing file {java_file.split('/')[-1]}\n"
             stop = True
 
     # check if string is in submission
@@ -136,7 +137,7 @@ def junitEvaluatorWithContentTest(input_folder, exercise_folder, params=None):
         for f,s in params['string_check'].items():
             input_file = os.path.join(input_folder,f)
             if not checkForString(input_file,s):
-                comment += "Mandatory string '"+s+"' not found in file "+f+"\n"
+                comment += f"Mandatory string '{s}' not found in file {f}\n"
                 points -= 1
 
     # create compilation directory
@@ -157,7 +158,7 @@ def junitEvaluatorWithContentTest(input_folder, exercise_folder, params=None):
             classpath += classpathSeperator + os.path.join(exercise_folder, f)
 
     # compile code
-    cmd = params['javac_path'] + ' -d ' +  "'" + compileDir + "'" + ' -cp ' + "'" + classpath + "'" + ' ' + java_files 
+    cmd = params['javac_path'] + ' -d ' +  "'" + compileDir + "'" + ' -cp ' + "'" + classpath + "'" + ' ' + java_files
     print("Running following command: ", cmd)
     fh_logFile.write("Running following command: "+cmd+"\n")
     proc = subprocess.Popen(cmd, shell=True, stdout=fh_logFile, stderr=fh_logFile).wait()
@@ -168,12 +169,12 @@ def junitEvaluatorWithContentTest(input_folder, exercise_folder, params=None):
 
     # We stop after compilation since sometimes following assignments depend on the compiled sources
     if stop:
-        comment += "<br>Pls. check with instructor if necessary."
+        comment += "\nPls. check with instructor if necessary.\n"
         return 0, comment.rstrip()
 
     # extend classpath with compiled submission files
     classpath += classpathSeperator + compileDir
-    classpath += classpathSeperator + os.path.join(exercise_folder, params['hamcrest_jar_path']) 
+    classpath += classpathSeperator + os.path.join(exercise_folder, params['hamcrest_jar_path'])
 
     TIMEOUT_TIME = 60
     # run Junit test
@@ -198,9 +199,9 @@ def junitEvaluatorWithContentTest(input_folder, exercise_folder, params=None):
         #resultLines = fileHandle.readlines()
         #print(resultLines)
         p, c = parseTestResult(resultFile, junit_test)
-        c = '<br>'.join(c.splitlines())
+        c = '\n'.join(c.splitlines())
         points += p
-        comment += c + "<br>"
+        comment += f"{c}\n"
         fh_resultFile.close()
 
     if points < 0:
@@ -210,7 +211,7 @@ def junitEvaluatorWithContentTest(input_folder, exercise_folder, params=None):
 
 
 if __name__ == "__main__":
-    p, c = junitEvaluatorWithContentTest(".", ".", 
+    p, c = junitEvaluatorWithContentTest(".", ".",
             {
   "java_files": ["SQLInteger.java", "SQLVarchar.java"],
   "junit_test_fqns": ["de.tuda.sdm.dmdb.test.storage.types.TestSQLInteger", "de.tuda.sdm.dmdb.test.storage.types.TestSQLVarchar"],
