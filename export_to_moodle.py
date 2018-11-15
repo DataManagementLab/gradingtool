@@ -5,10 +5,18 @@ import os
 import locale
 import datetime
 
-try:
-    locale.setlocale(locale.LC_ALL, 'DE')
-except:
-    locale.setlocale(locale.LC_ALL, 'de_DE.utf8')
+def probe_locales(locales):
+    for l in locales:
+        try:
+            locale.setlocale(locale.LC_ALL, l)
+        except:
+            pass
+        else:
+            return
+    raise locale.Error('Could not find correct locale')
+
+probe_locales(['DE', 'de_DE.utf8', 'de_DE.UTF-8'])
+
 timestamp = f"{datetime.datetime.now():%A, %d %B %Y, %H:%M}"
 
 
