@@ -2,8 +2,53 @@ import os
 import subprocess
 import re
 import shlex
+import glob
 from shutil import copyfile
+from pprint import pprint
 
+"""
+This evaluator tests student submissions against specified Junit tests.
+It is also able to check that a given string is included in the student submission, e.g. to test that bit operations were used.
+
+Make sure to adjust java_path and javac_path in tasks.json to your installation!
+
+Bellow is how an example tasks.json would look like:
+all jar files are assumed to be in exercise_folder (see below)
+'java_files': Files that the students have to submit (will be compiled)
+'junit_test_fqns': FQNS of test classes used for grading
+'testing_jar': jar file containing the test classes
+'additional_jars': usually used to point to the stencil/framework code 
+[
+  {
+    "name": "Problem 1a",
+    "evaluator": "junitEvaluatorWithContentTest",
+    "manually": false,
+    "total_points": 4,
+    "params": {
+      "java_files": ["SQLInteger.java", "SQLVarchar.java"],
+      "junit_test_fqns": ["de.tuda.dmdb.storage.types.grading.TestGradingSQLInteger", "de.tuda.dmdb.storage.types.grading.TestGradingSQLVarchar"],
+      "testing_jar": "SDM_Exercise_02_GradingTests.jar",
+      "additional_jars": ["SDM_Exercise_02_StencilCode.jar"],
+      "junit_jar_path": "junit-4.12.jar",
+      "hamcrest_jar_path": "hamcrest-core-1.3.jar",
+      "java_path": "/usr/bin/java",
+      "javac_path": "/usr/bin/javac",
+      "string_check":{"SQLInteger.java":">>"}
+    }
+  }
+]
+
+Steps to produce grading assets
+1) Create a .jar file from the uploaded Stencil/Framework code (the zip-file that was uploaded to moodle). (Take everything (src+test), even the empty implementation, it will be overwritten later) - name it SDM_Exercise_<exNum>_StencilCode.jar
+2) Create a .jar file containing the TestCases for grading (Lasse is in the process of restructuring the package structure to have separate grading-test packages) - only contain the TestCases, don't include TestSuits as they might point to irrelevant tests. - name it SDM_Exercise_<exNum>_GradingTests.jar
+3) Adopt the values in tasks.json for java_files junit_test_fqns testing_jar additional_jars (and optionally for string_check)
+(java_files should all contain the file names that are required for that exercise)
+4) Copy the junit-4.12.jar and hamcrest-core-1.3.jar files and the created jar files to the exercise folder
+
+Some relevant details about the junitEvaluatorWithContentTest of the autograder:
+- it checks if compiliation succeeded, otherwise 0 points for a problem
+- it places the compiled student files first on the classpath and then our grading-jars - this makes sure that student code is consider but also ensures that there is a class definition for files that were not submitted by students (e.g. a student only solved Problem 1, but not Problem 2)
+"""
 
 def prepareStudentCode(input_file):
     """
@@ -74,11 +119,10 @@ def parseTestResult(result_file, test_name=""):
 
     fileHandle = open(result_file)
     resultLines = fileHandle.readlines()
-    #print(resultLines)
     #parse how many test failed / passed
+    
     resultLine = resultLines[len(resultLines)-2]
     m = re.search('OK \((\d+) tests\)', resultLine)
-    #print("'"+resultLine+"'")
     comment = ""
     if m:
         return int(m.group(1)), f"{test_name}: passed\n"
@@ -94,6 +138,7 @@ def parseTestResult(result_file, test_name=""):
 
             return (total - failed), comment
         else:
+            # first line of JUnit output is the JUnit version, hence we look at the second line
             m = re.search('Exception in thread "main" (.*)', resultLines[1])
             if m:
                 return 0, f"{test_name}: f{m.group(1)}"
@@ -153,6 +198,7 @@ def junitEvaluatorWithContentTest(input_folder, exercise_folder, params=None):
     classpath = ""
     classpath += os.path.join(exercise_folder, params['testing_jar'])
     classpath += classpathSeperator + os.path.join(exercise_folder, params['junit_jar_path'])
+    classpath += classpathSeperator + os.path.join(exercise_folder, params['hamcrest_jar_path'])
     if 'additional_jars' in params:
         for f in params['additional_jars']:
             classpath += classpathSeperator + os.path.join(exercise_folder, f)
@@ -164,6 +210,15 @@ def junitEvaluatorWithContentTest(input_folder, exercise_folder, params=None):
     proc = subprocess.Popen(cmd, shell=True, stdout=fh_logFile, stderr=fh_logFile).wait()
     fh_logFile.close()
 
+    # check if compiliation was successful 
+    for f in params['java_files']:
+        # replace file extension
+        class_file = os.path.splitext(f)[0]+'.class'
+        resultList = [ os.path.basename(path) for path in glob.glob(compileDir+'/**/'+class_file, recursive=True) ]
+        if not class_file in resultList: 
+            comment += f"Compilation failed for file '{f}'\n"
+            stop = True
+
     # javac -d <compilation directory> -cp <junit-location>:<test-jar-location> <filenames>
     #e.g.: javac -d bin/ -cp ~/Downloads/junit-4.12.jar:SDM_Exercise_02_Solution.jar SQLInteger.java SQLVarchar.java RowPage.java HeapTable.java
 
@@ -172,9 +227,8 @@ def junitEvaluatorWithContentTest(input_folder, exercise_folder, params=None):
         comment += "\nPls. check with instructor if necessary.\n"
         return 0, comment.rstrip()
 
-    # extend classpath with compiled submission files
-    classpath += classpathSeperator + compileDir
-    classpath += classpathSeperator + os.path.join(exercise_folder, params['hamcrest_jar_path'])
+    # add compiled submission files to start of the classpath so that they take priority over any other files (e.g. those in a framework jar)
+    classpath = compileDir + classpathSeperator + classpath
 
     TIMEOUT_TIME = 60
     # run Junit test
@@ -215,7 +269,8 @@ if __name__ == "__main__":
             {
   "java_files": ["SQLInteger.java", "SQLVarchar.java"],
   "junit_test_fqns": ["de.tuda.sdm.dmdb.test.storage.types.TestSQLInteger", "de.tuda.sdm.dmdb.test.storage.types.TestSQLVarchar"],
-  "testing_jar": "SDM_Exercise_02_Solution.jar",
+  "testing_jar": "SDM_Exercise_02_GradingTests.jar",
+  "additional_jars": ["SDM_Exercise_02_CodeBase.jar"],
   "junit_jar_path": "$HOME/Downloads/junit-4.12.jar",
   "hamcrest_jar_path": "$HOME/Downloads/hamcrest-core-1.3.jar",
   "java_path": "/usr/bin/java",
