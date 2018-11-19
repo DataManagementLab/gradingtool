@@ -333,8 +333,6 @@ if __name__ == '__main__':
         ignore_limit = threshold
     )
 
-    reports = [{'file': 'SQLVarchar.java', 'report': 'ex2/output/plagiarism/reports_SQLVarchar.java/'}, {'file': 'HeapTable.java', 'report': 'ex2/output/plagiarism/reports_HeapTable.java/'}, {'file': 'RowPage.java', 'report': 'ex2/output/plagiarism/reports_RowPage.java/'}, {'file': 'SQLInteger.java', 'report': 'ex2/output/plagiarism/reports_SQLInteger.java/'}]
+    #reports = [{'file': 'SQLVarchar.java', 'report': 'ex2/output/plagiarism/reports_SQLVarchar.java/'}, {'file': 'HeapTable.java', 'report': 'ex2/output/plagiarism/reports_HeapTable.java/'}, {'file': 'RowPage.java', 'report': 'ex2/output/plagiarism/reports_RowPage.java/'}, {'file': 'SQLInteger.java', 'report': 'ex2/output/plagiarism/reports_SQLInteger.java/'}]
 
     parse_reports(output_folder, reports, limit)
-
-    #Check(output,plagiarism_base_folder,exercise_folder,plagiarism_folder,threshold)
