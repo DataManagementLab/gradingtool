@@ -3,6 +3,7 @@ import subprocess
 import re
 import shlex
 from shutil import copyfile
+from utils import robust_filereader
 
 
 def prepareStudentCode(input_file):
@@ -20,14 +21,15 @@ def prepareStudentCode(input_file):
     # backup origFile
     copyfile(input_file,input_file+".back")
 
-    fileHandleRead = open(input_file, 'r')
-    code = fileHandleRead.read()
+    # fileHandleRead = open(input_file, 'r')
+    # code = fileHandleRead.read()
+    code = robust_filereader(input_file, as_lines=False, fix_nls=True)
     #remove Umlauts from the code
     for ch in ['Ä', 'ä','Ö','ö','ü','Ü','ß']:
         if ch in code:
             code = code.replace(ch,'@')
     code = code.replace('System.out.print','//System.out.print')
-    fileHandleRead.close()
+    # fileHandleRead.close()
     fileHandleWrite = open(input_file, 'w')
     fileHandleWrite.write(code)
     fileHandleWrite.close()
@@ -45,8 +47,9 @@ def checkForString(input_file, checkString):
     if not os.path.exists(input_file):
         print("The following path does not exists", input_file)
         return False
-    fileHandle = open(input_file)
-    code = fileHandle.read()
+    # fileHandle = open(input_file)
+    # code = fileHandle.read()
+    robust_filereader(input_file, as_lines=False, fix_nls=True)
     m = re.search('.*'+checkString+'.*', code)
     if m:
         #print("Match",m.group(0))
@@ -96,7 +99,7 @@ def parseTestResult(result_file, test_name=""):
         else:
             m = re.search('Exception in thread "main" (.*)', resultLines[1])
             if m:
-                return 0, f"{test_name}: f{m.group(1)}"
+                return 0, f"{test_name}: {m.group(1)}"
             else:
                 print("Unexpected result, pls. check following file", result_file)
                 return 0, f"{test_name}: Pls. check with instructors\n"
