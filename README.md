@@ -12,7 +12,7 @@ install depencies using ``pip install -r requirements.txt``
       exercise		config folder of the exercise
       submissions	folder containing the submissions
       output		output folder (will contain grade table, unziped files, test run results, ...
-    
+
     optional arguments:
       -h, --help	show this help message and exit
       --skip-unzip    Skip unzip process
@@ -29,3 +29,10 @@ install depencies using ``pip install -r requirements.txt``
 
     optional arguments:
       -h, --help         show this help message and exit
+
+
+#### Conversion from moodle new zip-format
+
+```
+for f in *; do mv "${f}/"*.zip "${f}submission.zip" && rmdir "$f"; done
+```
