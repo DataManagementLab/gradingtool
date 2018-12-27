@@ -73,6 +73,7 @@ def run_mosspy(base_files, output_folder, ignore_limit):
         for f in get_files([file], output_folder):
             m.addFile(f)
 
+        print(f"Sending files for {filename}")
         report_url = m.send()  # Submission Report URL
 
         if report_url.startswith('Error:'):
@@ -306,8 +307,6 @@ if __name__ == '__main__':
 
     parser.add_argument('base', metavar='base', type=str, nargs=1,
                         help='Basefiles are stencil files without implementation of the exercises')
-    parser.add_argument('submissions', metavar='submissions', type=str, nargs=1,
-                        help='folder containing the submissions')
     parser.add_argument('output', metavar='output', type=str, nargs=1,
                         help='output folder (will contain grade table, unziped files, test run results, ...')
 
@@ -320,7 +319,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     base_folder = args.base[0]
-    submission_folder = args.submissions[0]
     output_folder = args.output[0]
     threshold = args.threshold
     lang = args.lang

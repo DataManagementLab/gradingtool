@@ -64,6 +64,7 @@ with open(gradingsheet, 'r') as csvfile:
 
     submission_count = 0
     passed_count = 0
+    groups_not_passed = set()
 
     # For all entries (rows) in csv...
     for row in reader:
@@ -94,6 +95,9 @@ with open(gradingsheet, 'r') as csvfile:
             if plagiarism:
                 passed = False
             grade = 1 if passed else 0
+
+            if not passed:
+                groups_not_passed.add(row["Group"])
 
             # Combine comment
             comment = "<table>"
@@ -129,4 +133,5 @@ with open(gradingsheet, 'r') as csvfile:
                 passed_count += 1
 
 print(f"Exported results to {moodle_import_file.name}")
+print(f"Groups that did not pass: {groups_not_passed}")
 print(f"{passed_count}/{submission_count} ({passed_count/submission_count*100:.2f}%) passed.")

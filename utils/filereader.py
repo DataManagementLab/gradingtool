@@ -19,14 +19,16 @@ def robust_filereader(filename, as_lines=True, try_naive=True, fix_nls=False):
     :return: points, comment
     """
 
-    try:
-        with open(filename, 'r') as f:
-            if as_lines:
-                return [line for line in f]
-            else:
-                return f.read()
-    except UnicodeDecodeError:
-        print(f"[ERROR]: \"{filename}\" could not be read using the naive filereader", file=sys.stderr)
+    if try_native:
+        try:
+            with open(filename, 'r') as f:
+                if as_lines:
+                    return [line for line in f]
+                else:
+                    return f.read()
+        except UnicodeDecodeError:
+            print(f"[ERROR]: \"{filename}\" could not be read using the naive filereader", file=sys.stderr)
+
 
     detector.reset()
     lines = []
