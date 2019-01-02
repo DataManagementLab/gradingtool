@@ -29,6 +29,9 @@ install depencies using ``pip install -r requirements.txt``
 
     optional arguments:
       -h, --help         show this help message and exit
+      --no-pass no_pass  specify group numbers that should not pass, comma
+                         separated, e.g. --no-pass=12,34,45
+
 
 
 #### Conversion from moodle new zip-format
