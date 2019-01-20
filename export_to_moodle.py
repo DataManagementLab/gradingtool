@@ -2,6 +2,7 @@ import argparse
 import csv
 import json
 import os
+import sys
 import locale
 import datetime
 
@@ -77,7 +78,11 @@ with open(gradingsheet, 'r') as csvfile:
             results_file = os.path.join(results_folder, row["Group"], "results.json")
             if not os.path.exists(results_file):
                 continue
-            results = json.load(open(results_file, "r"))
+            try:
+                results = json.load(open(results_file, "r"))
+            except json.decoder.JSONDecodeError:
+                print(f'Error reading results file= {results_file}')
+                sys.exit(1)
 
             plagiarism = False
             if shall_not_pass and row['Group'].endswith(tuple(shall_not_pass)):
