@@ -19,7 +19,7 @@ def robust_filereader(filename, as_lines=True, try_naive=True, fix_nls=False):
     :return: points, comment
     """
 
-    if try_native:
+    if try_naive:
         try:
             with open(filename, 'r') as f:
                 if as_lines:

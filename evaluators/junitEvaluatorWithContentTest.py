@@ -95,7 +95,7 @@ def checkForString(input_file, checkString):
         return False
     # fileHandle = open(input_file)
     # code = fileHandle.read()
-    robust_filereader(input_file, as_lines=False, fix_nls=True)
+    code = robust_filereader(input_file, as_lines=False, fix_nls=True)
     m = re.search('.*'+checkString+'.*', code)
     if m:
         #print("Match",m.group(0))
@@ -196,7 +196,7 @@ def junitEvaluatorWithContentTest(input_folder, exercise_folder, params=None):
 
     # create log file
     logFile = os.path.join(input_folder, 'logFile.txt')
-    fh_logFile = open(logFile, 'a')
+    fh_logFile = open(logFile, 'w')
 
     # assemble class path
     classpath = ""
