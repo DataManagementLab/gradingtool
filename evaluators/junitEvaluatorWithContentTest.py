@@ -239,7 +239,7 @@ def junitEvaluatorWithContentTest(input_folder, exercise_folder, params=None):
     for junit_test in params['junit_test_fqns']:
 
         resultFile = os.path.join(input_folder, 'result_' + junit_test + '.txt')
-        fh_resultFile = open(resultFile, 'a')
+        fh_resultFile = open(resultFile, 'w')
         cmd = params['java_path'] + ' -cp ' + "'" + classpath + "'" + ' org.junit.runner.JUnitCore '+ junit_test
         print("Running following command: ", cmd)
         fh_resultFile.write("Running following command: "+cmd+"\n")
