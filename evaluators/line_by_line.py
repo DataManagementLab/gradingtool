@@ -27,8 +27,6 @@ def line_by_line(input_folder, exercise_folder, params=None):
                 # Lines match? Increase points
                 possible_answers = reference_line.split('|')
                 for answer in possible_answers:
-                    print("reference", answer.strip())
-                    print("input", input_line.strip())
                     if input_line.strip() == answer.strip(): #reference_line.strip():
                         points += 1
                         break
