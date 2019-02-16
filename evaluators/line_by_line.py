@@ -25,11 +25,17 @@ def line_by_line(input_folder, exercise_folder, params=None):
             # Loop over every line
             for i, (input_line, reference_line) in enumerate(zip(input_file, reference_file)):
                 # Lines match? Increase points
-                if input_line.strip() == reference_line.strip():
-                    points += 1
-                # Otherwise, create a comment, stating which line was wrong
-                else:
-                    comment += "Wrong answer for {}), should be {}.\n".format(chr(97+i), reference_line.strip())
+                possible_answers = reference_line.split('|')
+                for answer in possible_answers:
+                    print("reference", answer.strip())
+                    print("input", input_line.strip())
+                    if input_line.strip() == answer.strip(): #reference_line.strip():
+                        points += 1
+                        break
+                    # Otherwise, create a comment, stating which line was wrong
+                    else:
+                        comment += "Wrong answer for {}), should be {}.\n".format(chr(97+i), reference_line.strip().replace('|',' or '))
+                        break
 
     # One point less than the correct count of lines as you can simply infer the last answer
     if "reduce" in params and params["reduce"]:
