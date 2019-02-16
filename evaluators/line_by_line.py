@@ -4,6 +4,7 @@ import os
 def line_by_line(input_folder, exercise_folder, params=None):
     """
     Compares an input file line by line with a reference file and counts the correct line
+    Multiple possible solutions can be separated by '|'
 
     :param input_folder: folder containing the submission
     :param exercise_folder: folder containing the current exercise
@@ -25,15 +26,14 @@ def line_by_line(input_folder, exercise_folder, params=None):
             # Loop over every line
             for i, (input_line, reference_line) in enumerate(zip(input_file, reference_file)):
                 # Lines match? Increase points
-                possible_answers = reference_line.split('|')
-                for answer in possible_answers:
-                    if input_line.strip() == answer.strip(): #reference_line.strip():
-                        points += 1
-                        break
-                    # Otherwise, create a comment, stating which line was wrong
-                    else:
-                        comment += "Wrong answer for {}), should be {}.\n".format(chr(97+i), reference_line.strip().replace('|',' or '))
-                        break
+                # We support multiple possible answers. The answers should be seperated by 
+                solution_sep = '|'
+                possible_solutions = map(str.strip, reference_line.split(solution_sep))
+                if input_line.strip() in possible_solutions: #if input_line.strip() == reference_line.strip():
+                    points += 1
+                # Otherwise, create a comment, stating which line was wrong
+                else:
+                    comment += "Wrong answer for {}), should be {}.\n".format(chr(97+i), reference_line.strip().replace('|',' or '))
 
     # One point less than the correct count of lines as you can simply infer the last answer
     if "reduce" in params and params["reduce"]:
