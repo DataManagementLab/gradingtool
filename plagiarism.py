@@ -1,8 +1,11 @@
-import os, sys, json
+import os
+import sys
+import json
 import shutil
 import mosspy
 from bs4 import BeautifulSoup
-import re, csv
+import re
+import csv
 import logging
 import argparse
 
@@ -46,7 +49,7 @@ def get_files(base_files, output_folder):
         if not os.path.isdir(os.path.join(output_folder, group_folder)):
             continue
 
-        if group_folder in ['plagiarism']:  #ignore when scanning for files
+        if group_folder in ['plagiarism']:  # ignore when scanning for files
             continue
 
         for filename in base_files:
@@ -55,6 +58,7 @@ def get_files(base_files, output_folder):
                 files.append(file)
 
     return files
+
 
 def run_mosspy(base_files, output_folder, ignore_limit):
     plagiarism_output_folder = os.path.join(output_folder, 'plagiarism')
@@ -82,13 +86,14 @@ def run_mosspy(base_files, output_folder, ignore_limit):
         else:
             print(f"Report Url for {filename}: {report_url}")
 
-
         print(f"Downloading reports for {filename}... ", end='')
         # report_file = os.path.join(output_folder, 'report.html')
         # m.saveWebPage(report_url, report_file)
 
-        report_folder = os.path.join(plagiarism_output_folder, f"reports_{filename}/")
-        mosspy.download_report(report_url, report_folder, connections=8, log_level=logging.WARNING)
+        report_folder = os.path.join(
+            plagiarism_output_folder, f"reports_{filename}/")
+        mosspy.download_report(report_url, report_folder,
+                               connections=8, log_level=logging.WARNING)
         print('Done')
 
         reports.append({
@@ -100,7 +105,11 @@ def run_mosspy(base_files, output_folder, ignore_limit):
 
 
 def write_graph(filename, names, data):
-    colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
+    # colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd',
+    #           '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
+    colors = ['#C0C0C0', '#808080', '#000000', '#FF0000', '#800000', '#FFFF00', '#808000',
+              '#00FF00', '#008000', '#00FFFF', '#008080', '#0000FF', '#000080', '#FF00FF', '#800080']
+
     nodes = []
     node_to_id = {}
     edges = []
@@ -108,7 +117,6 @@ def write_graph(filename, names, data):
 
     def get_group_from_file(file):
         return os.path.basename(os.path.dirname(file))
-
 
     def get_nodes():
         groups = set()
@@ -124,7 +132,6 @@ def write_graph(filename, names, data):
             node_to_id[g] = i
 
         return nodes
-
 
     def get_edges():
         def get_url(f):
@@ -161,7 +168,6 @@ def write_graph(filename, names, data):
                 'size': 25,
                 'shape': 'square'
             })
-
 
     get_nodes()
     get_edges()
@@ -244,6 +250,7 @@ def write_graph(filename, names, data):
 
     print(f"{filename} written.")
 
+
 def parse_reports(output_folder, reports, limit):
     data = []
     graph_data = []
@@ -282,14 +289,18 @@ def parse_reports(output_folder, reports, limit):
             if i < limit:
                 graph_data.append(item)
 
-    write_graph(os.path.join(output_folder, 'plagiarism', 'graph.html'), names, graph_data)
+    write_graph(os.path.join(output_folder, 'plagiarism',
+                             'graph.html'), names, graph_data)
 
-    data = sorted(data, key=lambda x: x['percent1']+x['percent2'], reverse=True)
+    data = sorted(
+        data, key=lambda x: x['percent1']+x['percent2'], reverse=True)
 
-    keys = ['file1', 'percent1', 'file2', 'percent2', 'lines', 'html_file'] #data[0].keys()
+    keys = ['file1', 'percent1', 'file2', 'percent2',
+            'lines', 'html_file']  # data[0].keys()
     with open(os.path.join(output_folder, 'plagiarism', 'results.csv'), 'w') as f:
         dict_writer = csv.DictWriter(f, keys)
         dict_writer.writeheader()
+
         def get_filename(file):
             folder = os.path.basename(os.path.dirname(file))
             return os.path.join(folder, os.path.basename(file))
@@ -299,7 +310,6 @@ def parse_reports(output_folder, reports, limit):
             item['file2'] = get_filename(item['file2'])
             item['html_file'] = get_filename(item['html_file'])
             dict_writer.writerow(item)
-
 
 
 if __name__ == '__main__':
@@ -316,6 +326,10 @@ if __name__ == '__main__':
                         help='Specify programming language')
     parser.add_argument('--limit', metavar='limit', type=int, default=20,
                         help='Limit Edges in generated graph')
+    parser.add_argument('--graph_only', action='store_true', default=False,
+                        help='Only create graph from existing data')
+    parser.add_argument('--graph_ignore_files', metavar='graph_ignore_files', type=str, default='',
+                        help='Specify files to ignore for graph (without extension, comma separated)')                    
     args = parser.parse_args()
 
     base_folder = args.base[0]
@@ -324,13 +338,26 @@ if __name__ == '__main__':
     lang = args.lang
     limit = args.limit
 
+    if not args.graph_only:
+        reports = run_mosspy(
+            base_files=get_base_files(base_folder, get_extensions(lang)),
+            output_folder=output_folder,
+            ignore_limit=threshold
+        )
+    else:
+        base_files = get_base_files(base_folder, get_extensions(lang))
+        base_files = filter(
+            lambda x: os.path.splitext(os.path.basename(x))[0] not in args.graph_ignore_files.split(),
+            base_files
+        )
 
-    reports = run_mosspy(
-        base_files = get_base_files(base_folder, get_extensions(lang)),
-        output_folder = output_folder,
-        ignore_limit = threshold
-    )
+        def get_report_item(base_file):
+            _, filename = os.path.split(base_file)
+            return {
+                'file': filename,
+                'report': os.path.join(output_folder, 'plagiarism', 'reports_{}'.format(filename))
+            }
+        reports = list(map(get_report_item, base_files))
 
-    #reports = [{'file': 'SQLVarchar.java', 'report': 'ex2/output/plagiarism/reports_SQLVarchar.java/'}, {'file': 'HeapTable.java', 'report': 'ex2/output/plagiarism/reports_HeapTable.java/'}, {'file': 'RowPage.java', 'report': 'ex2/output/plagiarism/reports_RowPage.java/'}, {'file': 'SQLInteger.java', 'report': 'ex2/output/plagiarism/reports_SQLInteger.java/'}]
-
+    print(reports)
     parse_reports(output_folder, reports, limit)
