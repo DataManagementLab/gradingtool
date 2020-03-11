@@ -6,7 +6,7 @@ Python Framework to grade assignment submissions
 install depencies using ``pip install -r requirements.txt``
 
 ### autograding tool
-    autograde.py [-h] [--plagcheck] exercise submissions output
+    autograde.py [-h] exercise submissions output
 
     positional arguments:
       exercise		config folder of the exercise

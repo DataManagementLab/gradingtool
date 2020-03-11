@@ -318,7 +318,7 @@ if __name__ == '__main__':
     parser.add_argument('base', metavar='base', type=str, nargs=1,
                         help='Basefiles are stencil files without implementation of the exercises')
     parser.add_argument('output', metavar='output', type=str, nargs=1,
-                        help='output folder (will contain grade table, unziped files, test run results, ...')
+                        help='output folder which also should contain all submission files (folder per group with all files), this folder will later contain a plagiarism folder with the reports')
 
     parser.add_argument('--threshold', metavar='threshold', type=int, default=10,
                         help='Ignore-level to ignore reports with below percentages of similarity')
@@ -347,7 +347,7 @@ if __name__ == '__main__':
     else:
         base_files = get_base_files(base_folder, get_extensions(lang))
         base_files = filter(
-            lambda x: os.path.splitext(os.path.basename(x))[0] not in args.graph_ignore_files.split(),
+            lambda x: os.path.splitext(os.path.basename(x))[0] not in args.graph_ignore_files.split(","),
             base_files
         )
 
